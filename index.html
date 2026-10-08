@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScamRadar — Bank Fraud Campaign Surveillance & Genomic Lineage System</title>
+  <meta name="description" content="Next-generation SIEM surveillance dashboard tracking evolving Indic scam lineages, cross-bank private set intersection, and epidemic reporting-delay nowcasting.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top SIEM Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="radar-logo">
+        <div class="radar-sweep"></div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">
+          ScamRadar
+          <span class="brand-tag">SIEM Fraud Engine</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-center-info">
+      <div class="siem-status-pill">
+        <span class="status-dot-pulse"></span>
+        <span>Surveillance Stream: <strong>ONLINE</strong></span>
+      </div>
+      <div class="siem-status-pill">
+        <span>RBI FREE-AI Audit: <strong style="color: var(--status-green);">COMPLIANT</strong></span>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <!-- Role Switcher -->
+      <div class="role-switcher-container" title="Switch between Analyst & Admin capabilities">
+        <button id="role-btn-analyst" class="role-btn active" onclick="app.setRole('analyst')">Analyst</button>
+        <button id="role-btn-admin" class="role-btn" onclick="app.setRole('admin')">Admin</button>
+      </div>
+
+      <div class="analyst-id-badge" id="current-user-badge">
+        ANALYST: 0x4B7F
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tab Bar -->
+  <nav class="nav-bar">
+    <button class="nav-tab active" data-screen="dashboard" onclick="app.switchScreen('dashboard')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      1. Dashboard (Home)
+    </button>
+    <button class="nav-tab" data-screen="ingestion" onclick="app.switchScreen('ingestion')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      2. Complaint Ingestion
+    </button>
+    <button class="nav-tab" data-screen="lineage-detail" id="nav-lineage-detail" onclick="app.switchScreen('lineage-detail')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
+      3. Lineage Detail View
+    </button>
+    <button class="nav-tab" data-screen="cross-bank" onclick="app.switchScreen('cross-bank')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+      4. Cross-Bank Intelligence (PSI)
+    </button>
+    <button class="nav-tab" data-screen="alerts" onclick="app.switchScreen('alerts')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      5. Early Warning Alerts
+      <span class="nav-tab-badge" id="active-alerts-badge">3</span>
+    </button>
+    <button class="nav-tab" data-screen="audit" onclick="app.switchScreen('audit')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      6. Audit Trail
+    </button>
+    <button class="nav-tab" data-screen="calibration" id="nav-tab-calibration" onclick="app.switchScreen('calibration')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      7. Delay Calibration <span class="admin-only-tag">Admin</span>
+    </button>
+    <button class="nav-tab" data-screen="dataset-loader" id="nav-tab-dataset" onclick="app.switchScreen('dataset-loader')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+      8. Dataset Loader <span class="admin-only-tag">Admin</span>
+    </button>
+    <button class="nav-tab" data-screen="poisoning" id="nav-tab-poisoning" onclick="app.switchScreen('poisoning')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+      Poisoning Review <span class="admin-only-tag">Admin</span>
+    </button>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+
+    <!-- ========================================== -->
+    <!-- SCREEN 1: DASHBOARD (HOME) -->
+    <!-- ========================================== -->
+    <section id="screen-dashboard" class="screen-view active">
+      <!-- 4 Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-title">Total Complaints Today</span>
+            <span class="stat-icon">📥</span>
+          </div>
+          <div class="stat-value" id="stat-today-complaints">14</div>
+          <div class="stat-subtext">Ingested across simulated Bank queues (A, B, C)</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-title">Active Campaign Lineages</span>
+            <span class="stat-icon">🧬</span>
+          </div>
+          <div class="stat-value" id="stat-active-lineages">6</div>
+          <div class="stat-subtext">Persistent dialog-act manipulation templates</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-title">Variants of Concern</span>
+            <span class="stat-badge-danger">CRITICAL SURGE</span>
+          </div>
+          <div class="stat-value" id="stat-voc-count" style="color: var(--status-red);">2</div>
+          <div class="stat-subtext">High growth rate & multi-bank churn detected</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-title">Estimated Unreported Complaints</span>
+            <span class="stat-badge-warning">NOWCAST CORRECTION</span>
+          </div>
+          <div class="stat-value" id="stat-unreported-count" style="color: var(--status-amber);">+115</div>
+          <div class="stat-subtext">Correcting for 60% reporting delay & weekend lag</div>
+        </div>
+      </div>
+
+      <!-- Lineages Table Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              Active Campaign Lineages Surveillance
+            </div>
+            <div class="panel-subtitle">Click any lineage to inspect Dialog-Act sequence, Nowcast curve, and Identifier churn</div>
+          </div>
+          <div class="panel-actions">
+            <input type="text" id="lineage-search" class="search-bar" placeholder="Search lineage or script type..." onkeyup="app.filterLineages()">
+            <select id="lineage-filter-growth" class="form-select btn-sm" onchange="app.filterLineages()">
+              <option value="ALL">All Growth Rates</option>
+              <option value="Critical">Critical Only</option>
+              <option value="Rising">Rising</option>
+              <option value="Slow">Slow</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table" id="lineages-table">
+            <thead>
+              <tr>
+                <th>Lineage ID</th>
+                <th>Campaign Name & Script Type</th>
+                <th>Language Mix</th>
+                <th>Observed Count</th>
+                <th>Nowcast Count (Corrected)</th>
+                <th>Growth Rate</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="lineages-table-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 2: COMPLAINT INGESTION -->
+    <!-- ========================================== -->
+    <section id="screen-ingestion" class="screen-view">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+              Individual Complaint Intake & Script Induction
+            </div>
+            <div class="panel-subtitle">Auto-extracts identifiers, infers dialog-act sequence, and matches to genomic lineage</div>
+          </div>
+          <div class="panel-actions">
+            <span class="badge badge-monitoring">Poisoning Defense Active</span>
+          </div>
+        </div>
+
+        <!-- Quick Sample Ingestion Presets -->
+        <div style="padding: 1rem 1.25rem 0.25rem 1.25rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+          <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Load Verified Samples:</span>
+          <button class="btn btn-secondary btn-sm" onclick="app.loadSampleComplaint('hindi_elec')">⚡ Hindi Electricity Threat</button>
+          <button class="btn btn-secondary btn-sm" onclick="app.loadSampleComplaint('tamil_kyc')">💳 Tamil SBI KYC Smishing</button>
+          <button class="btn btn-secondary btn-sm" onclick="app.loadSampleComplaint('hinglish_job')">💼 Hinglish Telegram Task</button>
+          <button class="btn btn-secondary btn-sm" onclick="app.loadSampleComplaint('telugu_elec')">⚡ Telugu Power Disconnect</button>
+          <button class="btn btn-secondary btn-sm" onclick="app.loadSampleComplaint('english_arrest')">🚨 English Digital Arrest</button>
+          <button class="btn btn-danger btn-sm" onclick="app.simulatePoisoningAttack()" title="Simulate 6 rapid complaints from same reporter to test poisoning resistance">🛡️ Simulate Poisoning Attempt</button>
+        </div>
+
+        <form id="ingestion-form" onsubmit="app.handleComplaintSubmit(event)">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label class="form-label">
+                Raw Message Text (SMS / Complaint Description)
+                <span class="form-helper">Paste exact victim smishing message or incident narrative</span>
+              </label>
+              <textarea id="ingest-text" class="form-textarea" placeholder="Enter SMS text or complaint..." required oninput="app.handleTextAnalysis()"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Reported Date</label>
+              <input type="date" id="ingest-date" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Source Bank Queue</label>
+              <select id="ingest-bank" class="form-select" required>
+                <option value="Bank A">Bank A (State Public Sector)</option>
+                <option value="Bank B">Bank B (Private Premier)</option>
+                <option value="Bank C">Bank C (Regional & Fintech)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                Language
+                <span class="form-helper" id="lang-detect-tag">Auto-Detecting...</span>
+              </label>
+              <select id="ingest-lang" class="form-select">
+                <option value="Auto">Auto-Detect</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Tamil">Tamil</option>
+                <option value="Telugu">Telugu</option>
+                <option value="Kannada">Kannada</option>
+                <option value="Hinglish">Hinglish</option>
+                <option value="English">English</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                Reporter ID
+                <span class="form-helper">Anonymous hash (Anti-Poisoning Tracking)</span>
+              </label>
+              <input type="text" id="ingest-reporter" class="form-input" readonly>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Extracted Phone Number (Masked preview)</label>
+              <input type="text" id="ingest-phone" class="form-input" placeholder="e.g. 9876543210 (Auto-extracted)">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Extracted UPI ID (Masked preview)</label>
+              <input type="text" id="ingest-upi" class="form-input" placeholder="e.g. merchant@upi (Auto-extracted)">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Extracted URL / Link</label>
+              <input type="text" id="ingest-url" class="form-input" placeholder="e.g. https://... (Auto-extracted)">
+            </div>
+
+            <!-- Inferred Dialog-Act Sequence Real-time visualizer -->
+            <div class="form-group full-width">
+              <label class="form-label">Inferred Dialog-Act Sequence (Language-Invariant Structure)</label>
+              <div id="ingest-act-sequence" class="act-flow-container">
+                <span style="font-size: 0.8rem; color: var(--text-dim);">Type or load a sample message above to induce the dialog-act sequence...</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--border-dim); display: flex; justify-content: flex-end; gap: 0.75rem; background: var(--bg-surface);">
+            <button type="button" class="btn btn-secondary" onclick="app.resetIngestionForm()">Clear Form</button>
+            <button type="submit" class="btn btn-primary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Classify & Ingest Complaint
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Bulk CSV Upload Area -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Bulk CSV Complaint Batch Ingestion</div>
+            <div class="panel-subtitle">CSV columns: <code>message_text, reported_date, source_bank, language</code></div>
+          </div>
+          <div class="panel-actions">
+            <button class="btn btn-secondary btn-sm" onclick="app.downloadCsvTemplate()">Download Sample CSV</button>
+          </div>
+        </div>
+
+        <div style="padding: 1.5rem;">
+          <div class="drop-zone" id="csv-drop-zone" onclick="document.getElementById('csv-file-input').click()">
+            <div class="drop-zone-icon">📄</div>
+            <div style="font-weight: 600; margin-bottom: 0.25rem;">Click to upload CSV or drag & drop files here</div>
+            <div style="font-size: 0.78rem; color: var(--text-dim);">Standard batch intake format supported</div>
+            <input type="file" id="csv-file-input" accept=".csv" style="display: none;" onchange="app.handleBulkCsvUpload(this.files[0])">
+          </div>
+
+          <div id="bulk-progress-container" style="display: none; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.25rem;">
+              <span id="bulk-progress-text">Ingesting complaints...</span>
+              <span id="bulk-progress-pct">0%</span>
+            </div>
+            <div class="progress-bar-container">
+              <div id="bulk-progress-fill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 3: LINEAGE DETAIL VIEW -->
+    <!-- ========================================== -->
+    <section id="screen-lineage-detail" class="screen-view">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <button class="btn btn-secondary btn-sm" onclick="app.switchScreen('dashboard')" style="margin-bottom: 0.5rem;">
+            ← Back to All Lineages
+          </button>
+          <h2 id="detail-lineage-title" style="font-size: 1.4rem; font-weight: 700; color: #FFFFFF; display: flex; align-items: center; gap: 0.5rem;">
+            Loading Lineage...
+          </h2>
+          <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">
+            <span>ID: <strong id="detail-lineage-id" class="masked-id">LIN-XXXX</strong></span>
+            <span>Script: <strong id="detail-script-type">Type</strong></span>
+            <span>Created: <strong id="detail-created-date">YYYY-MM-DD</strong></span>
+          </div>
+        </div>
+
+        <!-- Analyst Actions Panel -->
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn btn-danger btn-sm" onclick="app.markAsVariantOfConcern()">
+            🚩 Mark Variant of Concern
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="app.escalateLineageToAdmin()">
+            ⬆️ Escalate to Admin / I4C
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="app.markLineageResolved()">
+            ✅ Mark Resolved
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="app.openAddNoteModal()">
+            📝 Add Note
+          </button>
+        </div>
+      </div>
+
+      <!-- Dialog-Act Sequence Pipeline -->
+      <div class="panel" style="margin-bottom: 1.25rem;">
+        <div class="panel-header">
+          <div class="panel-title" style="font-size: 0.92rem;">
+            Genomic Manipulation Script (Dialog-Act Sequence)
+          </div>
+          <div class="panel-subtitle">Invariant semantic backbone across Hinglish, Hindi, Tamil & English</div>
+        </div>
+        <div style="padding: 1rem 1.25rem;">
+          <div id="detail-act-sequence" class="act-flow-container">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Layout -->
+      <div class="lineage-grid-layout">
+        <!-- Dual Timeline Chart -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                Surveillance Timeline & Epidemic Nowcasting
+              </div>
+              <div class="panel-subtitle">Solid: Observed complaints | Dashed: Nowcast-corrected (Rt adjusted) | Shaded: Estimated unreported</div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; font-size: 0.76rem;">
+              <span style="display: flex; align-items: center; gap: 0.3rem;"><span style="width: 12px; height: 3px; background: #38BDF8; display: inline-block;"></span> Observed</span>
+              <span style="display: flex; align-items: center; gap: 0.3rem;"><span style="width: 12px; height: 3px; border-top: 2px dashed #F43F5E; display: inline-block;"></span> Nowcasted</span>
+            </div>
+          </div>
+          <div style="padding: 1rem;" id="timeline-chart-container">
+            <!-- SVG Chart rendered here -->
+          </div>
+        </div>
+
+        <!-- Language Distribution Chart -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Language Distribution</div>
+            <div class="panel-subtitle">Script invariance proof</div>
+          </div>
+          <div id="language-donut-container">
+            <!-- Donut Chart rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Identifier Churn Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Identifier Churn Panel (Evasion Tracking)
+            </div>
+            <div class="panel-subtitle">Phone numbers, UPI handles & URLs rotated while manipulation script persists</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Lineage Churn Rate:</span>
+            <span id="detail-churn-badge" class="badge badge-churn-high">High Churn</span>
+            <span id="detail-churn-speed" style="font-size: 0.8rem; color: var(--accent-cyan);">Rotates every 1.4 days</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Identifier Type</th>
+                <th>Masked Value (Key Rule: Plaintext Hidden)</th>
+                <th>Cryptographic Hash</th>
+                <th>First Seen</th>
+                <th>Last Seen</th>
+                <th>Complaints Used</th>
+              </tr>
+            </thead>
+            <tbody id="detail-identifiers-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Associated Complaints List -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Associated Complaints in this Lineage</div>
+          <div class="panel-subtitle">Multilingual incident logs mapped to this script</div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Complaint ID</th>
+                <th>Reported Date</th>
+                <th>Language</th>
+                <th>Source Bank</th>
+                <th>Reporter Hash</th>
+                <th>Raw Message Content</th>
+                <th>Tags</th>
+              </tr>
+            </thead>
+            <tbody id="detail-complaints-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 4: CROSS-BANK INTELLIGENCE PANEL -->
+    <!-- ========================================== -->
+    <section id="screen-cross-bank" class="screen-view">
+      <!-- Privacy Notice Banner -->
+      <div class="privacy-banner">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <div>
+          <strong>Privacy Preserving Cross-Bank Intelligence (PSI Protocol):</strong>
+          No raw complaint data is shared between institutions. Only anonymised campaign sketches and keyed identifier hashes are compared.
+        </div>
+      </div>
+
+      <!-- Threshold Controls (Admin Accessible) -->
+      <div class="panel" style="margin-bottom: 1.25rem;">
+        <div class="panel-header">
+          <div class="panel-title">Cross-Bank Flagging Sensitivity Thresholds</div>
+          <span class="admin-only-tag">Admin Configurable</span>
+        </div>
+        <div style="padding: 1rem 1.25rem; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; background: var(--bg-surface);">
+          <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem;">
+            <label for="psi-threshold-banks">Minimum Institutions Involved ($k$):</label>
+            <input type="number" id="psi-threshold-banks" min="2" max="5" value="2" class="form-input btn-sm" style="width: 70px;" onchange="app.updatePsiThresholds()">
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem;">
+            <label for="psi-threshold-complaints">Minimum Total Complaints ($m$):</label>
+            <input type="number" id="psi-threshold-complaints" min="5" max="50" value="10" class="form-input btn-sm" style="width: 70px;" onchange="app.updatePsiThresholds()">
+          </div>
+          <div style="margin-left: auto; font-size: 0.8rem; color: var(--text-dim);">
+            Active Filter: Flagging campaigns present in &ge; <span id="psi-label-banks">2</span> banks with &ge; <span id="psi-label-complaints">10</span> reports.
+          </div>
+        </div>
+      </div>
+
+      <!-- Campaigns Spanning Multiple Banks Table -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Multi-Bank Syndicated Scam Campaigns</div>
+            <div class="panel-subtitle">Rule enforced: Never shows which specific bank reported what. Shows count only.</div>
+          </div>
+          <div class="panel-actions">
+            <button class="btn btn-secondary btn-sm" onclick="app.exportCrossBankDossier()">📥 Export PSI Dossier</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Lineage ID</th>
+                <th>Campaign Name & Script Type</th>
+                <th>Banks Involved (Count Only)</th>
+                <th>Identifier Overlap Score</th>
+                <th>Min. Victim Estimate</th>
+                <th>Identifier Churn</th>
+                <th>Surveillance Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cross-bank-table-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 5: EARLY WARNING ALERTS -->
+    <!-- ========================================== -->
+    <section id="screen-alerts" class="screen-view">
+      <div class="panel" style="margin-bottom: 1.25rem;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              Active Early Warning Surveillance Alerts
+            </div>
+            <div class="panel-subtitle">Campaigns that crossed growth rate or cross-bank epidemic thresholds</div>
+          </div>
+          <div class="panel-actions">
+            <button class="btn btn-secondary btn-sm" onclick="app.refreshAlerts()">🔄 Refresh Alerts</button>
+          </div>
+        </div>
+
+        <div style="padding: 1.25rem;">
+          <div class="alerts-grid" id="active-alerts-container">
+            <!-- Alert Cards rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Alert History Log -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Alert History & Resolution Log</div>
+          <div class="panel-subtitle">Historical escalations and dismissals with verified rationale</div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Alert ID</th>
+                <th>Lineage ID</th>
+                <th>Trigger Reason</th>
+                <th>Timestamp</th>
+                <th>Resolution Status</th>
+                <th>Resolved / Dismissed Reason</th>
+                <th>Acknowledged By</th>
+              </tr>
+            </thead>
+            <tbody id="alert-history-table-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 6: AUDIT TRAIL -->
+    <!-- ========================================== -->
+    <section id="screen-audit" class="screen-view">
+      <!-- RBI Note -->
+      <div class="rbi-audit-note">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <div>
+          <strong>RBI FREE-AI Compliance Ledger:</strong>
+          This audit trail is designed to meet RBI FREE-AI framework requirements for explainability and traceability. All actions carry tamper-evident system hashes.
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Tamper-Evident System Audit Ledger
+            </div>
+            <div class="panel-subtitle">Hashed Analyst IDs and cryptographic system hashes guarantee non-repudiation</div>
+          </div>
+          <div class="panel-actions">
+            <input type="text" id="audit-search" class="search-bar" placeholder="Filter action or lineage..." onkeyup="app.filterAuditLogs()">
+            <button id="btn-export-audit" class="btn btn-secondary btn-sm" onclick="app.exportAuditCsv()">
+              📥 Export Audit CSV (Admin)
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Audit Log ID</th>
+                <th>Timestamp</th>
+                <th>Analyst ID (Hashed)</th>
+                <th>Action Taken</th>
+                <th>Affected Lineage</th>
+                <th>Action Details</th>
+                <th>System Hash (Tamper-Evidence)</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 7: REPORTING DELAY CALIBRATION (ADMIN) -->
+    <!-- ========================================== -->
+    <section id="screen-calibration" class="screen-view">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Epidemic Nowcasting & Reporting Delay Calibration
+            </div>
+            <div class="panel-subtitle">Configure empirical reporting lag distribution to correct right-censored complaint streams</div>
+          </div>
+          <span class="admin-only-tag">Admin Settings</span>
+        </div>
+
+        <div style="padding: 1.5rem;">
+          <div class="lineage-grid-layout" style="align-items: start;">
+            <!-- Sliders Config -->
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+              <div class="form-group">
+                <label class="form-label">
+                  Instant Reports (0–6 hours): <strong id="val-instant" style="color: var(--status-green);">20%</strong>
+                  <span class="form-helper">Victims reporting immediate banking freeze alerts</span>
+                </label>
+                <input type="range" id="range-instant" min="5" max="50" value="20" oninput="app.handleCalibrationSliderChange()">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  Delayed Reports (2–5 days): <strong id="val-delayed" style="color: var(--status-amber);">60%</strong>
+                  <span class="form-helper">Weekend lag and delayed victim branch realization</span>
+                </label>
+                <input type="range" id="range-delayed" min="20" max="80" value="60" oninput="app.handleCalibrationSliderChange()">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  Severe Tail Lag (10–30 days): <strong id="val-tail" style="color: var(--status-red);">20%</strong>
+                  <span class="form-helper">Delayed statement reconciliation & credit bureau discovery</span>
+                </label>
+                <input type="range" id="range-tail" min="5" max="40" value="20" oninput="app.handleCalibrationSliderChange()">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  Critical Growth Rate Threshold: <strong id="val-growth-thresh">15</strong> complaints/day
+                  <span class="form-helper">Triggers immediate Variant of Concern alert</span>
+                </label>
+                <input type="range" id="range-growth-thresh" min="5" max="40" value="15" oninput="app.handleGrowthThresholdSliderChange()">
+              </div>
+
+              <div style="display: flex; gap: 0.75rem;">
+                <button class="btn btn-primary" onclick="app.applyCalibrationChanges()">
+                  💾 Save & Recalibrate All Lineages
+                </button>
+                <button class="btn btn-secondary" onclick="app.resetCalibrationDefaults()">
+                  Reset to Empiric Defaults
+                </button>
+              </div>
+            </div>
+
+            <!-- Preview Chart -->
+            <div class="panel" style="margin-bottom: 0;">
+              <div class="panel-header">
+                <div class="panel-title" style="font-size: 0.88rem;">Cumulative Reporting Delay Distribution (CDF)</div>
+                <span class="badge badge-monitoring">Real-Time Model</span>
+              </div>
+              <div style="padding: 1rem;" id="calibration-curve-container">
+                <!-- Curve rendered here -->
+              </div>
+              <div style="padding: 0 1rem 1rem 1rem; font-size: 0.75rem; color: var(--text-dim);">
+                Curve indicates probability $P(\text{delay} \le \tau)$ of a scam victim reporting within $\tau$ days. Earlier days have severe undercounting requiring epidemic nowcasting.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 8: DATASET LOADER (ADMIN) -->
+    <!-- ========================================== -->
+    <section id="screen-dataset-loader" class="screen-view">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Baseline Dataset Loader & Corpus Benchmarking
+            </div>
+            <div class="panel-subtitle">Pre-populate ScamRadar with verified open Indic smishing corpora</div>
+          </div>
+          <span class="admin-only-tag">Admin Tool</span>
+        </div>
+
+        <div style="padding: 1.5rem;">
+          <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-dim); margin-bottom: 1.5rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: #FFFFFF;">Verified Indic Corpora (Mendeley & Dravidian)</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+              Load baseline benchmark containing authentic Tamil, Hindi, Hinglish, Telugu, and English scam complaints with realistic reporting-delay metadata layers.
+            </p>
+            <button class="btn btn-primary" id="btn-load-mendeley" onclick="app.loadVerifiedMendeleyCorpus()">
+              📥 Ingest Mendeley & Dravidian Corpus (100+ Complaints)
+            </button>
+          </div>
+
+          <div class="attribution-note">
+            Note: "Baseline data sourced from Mendeley SMS Phishing Dataset (DOI: 10.17632/f45bkkt8pr.1) and Dravidian SMS Spam Corpus."
+          </div>
+
+          <!-- Ingestion Progress & Summary -->
+          <div id="loader-progress-card" style="display: none; margin-top: 1.5rem; background: var(--bg-surface-elevated); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-bright);">
+            <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;" id="loader-status-text">Ingesting Corpus...</div>
+            <div class="progress-bar-container">
+              <div id="loader-progress-fill" class="progress-bar-fill"></div>
+            </div>
+            <div id="loader-summary-box" style="display: none; margin-top: 1rem; font-size: 0.84rem; line-height: 1.6; color: #E2E8F0;">
+              <!-- Summary populated after load -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- POISONING REVIEW SCREEN (ADMIN) -->
+    <!-- ========================================== -->
+    <section id="screen-poisoning" class="screen-view">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              🛡️ Anti-Poisoning Quarantine & Smear Attack Detection
+            </div>
+            <div class="panel-subtitle">Rule: Any reporter targeting the same lineage &gt;5 times in 24h is flagged as potential smear/poisoning attempt</div>
+          </div>
+          <span class="badge badge-critical" id="poisoning-count-badge">1 Flagged Attack</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Queue ID</th>
+                <th>Reporter Hash</th>
+                <th>Target Lineage</th>
+                <th>24h Submissions</th>
+                <th>Flagged Timestamp</th>
+                <th>Suspected Attack Intent</th>
+                <th>Status</th>
+                <th>Admin Actions</th>
+              </tr>
+            </thead>
+            <tbody id="poisoning-table-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SIEM Footer -->
+  <footer class="app-footer">
+    <div>
+      <strong>ScamRadar Engine v2.4</strong> — Cross-Bank Fraud Lineage & Genomic Surveillance
+    </div>
+    <div>
+      Compliant with Reserve Bank of India (RBI) FREE-AI Framework &bull; I4C / DPIP Ready
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- MODALS -->
+  <!-- ========================================== -->
+
+  <!-- Classification Confirmation Modal -->
+  <div class="modal-overlay" id="modal-classification">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Script Induction & Lineage Assignment</div>
+        <button class="modal-close" onclick="app.closeModal('modal-classification')">&times;</button>
+      </div>
+      <div class="modal-body" id="classification-modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modal-classification')">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-ingestion" onclick="app.confirmIngestion()">Confirm & Ingest Complaint</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dismiss Alert Modal -->
+  <div class="modal-overlay" id="modal-dismiss-alert">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Dismiss Early Warning Alert</div>
+        <button class="modal-close" onclick="app.closeModal('modal-dismiss-alert')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Please specify the regulatory justification for dismissing alert <strong id="dismiss-alert-id" class="masked-id">ALT-XXXX</strong>:
+        </p>
+        <div class="form-group">
+          <label class="form-label">Dismissal Reason</label>
+          <select id="dismiss-reason-select" class="form-select">
+            <option value="Duplicate">Duplicate Alert</option>
+            <option value="False Positive">False Positive (Benign Promo / Test Pattern)</option>
+            <option value="Resolved Externally">Resolved Externally (Takedown Confirmed by Telco/Host)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modal-dismiss-alert')">Cancel</button>
+        <button class="btn btn-danger" onclick="app.confirmDismissAlert()">Confirm Dismissal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Note Modal -->
+  <div class="modal-overlay" id="modal-add-note">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Add Forensic Analyst Note</div>
+        <button class="modal-close" onclick="app.closeModal('modal-add-note')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Analyst Note Content</label>
+          <textarea id="analyst-note-text" class="form-textarea" placeholder="Record investigation findings, mule account connections, or ISP takedown notices..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modal-add-note')">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveAnalystNote()">Append Note to Audit Ledger</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
